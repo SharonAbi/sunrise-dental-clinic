@@ -1,0 +1,30 @@
+@startuml 04_sequence_login
+skinparam backgroundColor white
+
+actor Staff
+participant "LoginServlet" as Servlet
+participant "AuthService" as Auth
+participant "UserDAO" as DAO
+participant "PasswordUtil" as Hash
+database "MySQL" as DB
+
+Staff -> Servlet : POST /login (username, password)
+Servlet -> Auth : authenticate(username, password)
+Auth -> DAO : findByUsername(username)
+DAO -> DB : SELECT * FROM users WHERE username = ?
+DB --> DAO : user row
+DAO --> Auth : User
+Auth -> Hash : hash(password)
+Hash --> Auth : hashedPassword
+Auth -> Auth : compare hashedPassword\nwith stored hash
+
+alt credentials valid
+  Auth --> Servlet : User
+  Servlet -> Servlet : create HttpSession,\nstore user attribute
+  Servlet --> Staff : redirect to /dashboard
+else invalid
+  Auth --> Servlet : null
+  Servlet --> Staff : forward to login.jsp\nwith error message
+end
+
+@enduml

@@ -1,0 +1,42 @@
+@startuml 06_sequence_bill
+skinparam backgroundColor white
+
+actor Staff
+participant "BillServlet" as Servlet
+participant "AppointmentService" as ASvc
+participant "BillService" as BSvc
+participant "BillDAO" as BDAO
+participant "BillingStrategyFactory" as Factory
+participant "BillingStrategy" as Strategy
+database "MySQL" as DB
+
+Staff -> Servlet : GET /bill?number=...&insurance=on
+Servlet -> ASvc : findAppointment(number)
+ASvc --> Servlet : Appointment
+
+Servlet -> BSvc : generateBill(appointment, hasInsurance)
+BSvc -> BDAO : findByAppointmentId(appointment.id)
+BDAO -> DB : SELECT * FROM bills WHERE appointment_id = ?
+
+alt bill already exists
+  DB --> BDAO : bill row
+  BDAO --> BSvc : Bill
+else no bill yet
+  DB --> BDAO : empty result
+  BDAO --> BSvc : null
+  BSvc -> Factory : getStrategy(hasInsurance)
+  Factory --> BSvc : BillingStrategy
+  BSvc -> Strategy : calculateDiscount(consultationFee, treatmentFee)
+  Strategy --> BSvc : discount
+  BSvc -> Strategy : calculateTotal(consultationFee, treatmentFee)
+  Strategy --> BSvc : total
+  BSvc -> BDAO : save(bill)
+  BDAO -> DB : INSERT INTO bills ...
+  DB --> BDAO : generated bill id
+  BDAO --> BSvc : Bill
+end
+
+BSvc --> Servlet : Bill
+Servlet --> Staff : forward to bill.jsp (printable receipt)
+
+@enduml

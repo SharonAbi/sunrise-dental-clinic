@@ -1,0 +1,104 @@
+@startuml 03_class_architecture
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+
+interface PatientDAO {
+  +save(Patient) : Patient
+  +findById(int) : Patient
+}
+interface AppointmentDAO {
+  +save(Appointment) : Appointment
+  +findByAppointmentNumber(String) : Appointment
+  +existsByAppointmentNumber(String) : boolean
+  +findAll() : List<Appointment>
+}
+interface BillDAO {
+  +save(Bill) : Bill
+  +findByAppointmentId(int) : Bill
+}
+interface UserDAO {
+  +findByUsername(String) : User
+}
+
+class PatientDAOImpl
+class AppointmentDAOImpl
+class BillDAOImpl
+class UserDAOImpl
+
+PatientDAOImpl ..|> PatientDAO
+AppointmentDAOImpl ..|> AppointmentDAO
+BillDAOImpl ..|> BillDAO
+UserDAOImpl ..|> UserDAO
+
+class DAOFactory << (F,orchid) Factory >> {
+  +{static} getPatientDAO() : PatientDAO
+  +{static} getAppointmentDAO() : AppointmentDAO
+  +{static} getBillDAO() : BillDAO
+  +{static} getUserDAO() : UserDAO
+}
+DAOFactory ..> PatientDAOImpl : creates
+DAOFactory ..> AppointmentDAOImpl : creates
+DAOFactory ..> BillDAOImpl : creates
+DAOFactory ..> UserDAOImpl : creates
+
+interface BillingStrategy {
+  +calculateDiscount(double, double) : double
+  +calculateTotal(double, double) : double
+  +getDescription() : String
+}
+class StandardBillingStrategy
+class InsuranceBillingStrategy
+StandardBillingStrategy ..|> BillingStrategy
+InsuranceBillingStrategy ..|> BillingStrategy
+
+class BillingStrategyFactory << (F,orchid) Factory >> {
+  +{static} getStrategy(boolean) : BillingStrategy
+}
+BillingStrategyFactory ..> BillingStrategy : creates
+
+class AppointmentService {
+  -patientDAO : PatientDAO
+  -appointmentDAO : AppointmentDAO
+  --
+  +registerAppointment(...) : Appointment
+  +findAppointment(String) : Appointment
+}
+AppointmentService --> PatientDAO
+AppointmentService --> AppointmentDAO
+
+class BillService {
+  -billDAO : BillDAO
+  --
+  +generateBill(Appointment, boolean) : Bill
+}
+BillService --> BillDAO
+BillService ..> BillingStrategyFactory : uses
+
+class AuthService {
+  -userDAO : UserDAO
+  --
+  +authenticate(String, String) : User
+}
+AuthService --> UserDAO
+
+class DBConnection << (S,lightblue) Singleton >> {
+  -{static} instance : DBConnection
+  --
+  +{static} getInstance() : DBConnection
+  +getConnection() : Connection
+}
+PatientDAOImpl ..> DBConnection : uses
+AppointmentDAOImpl ..> DBConnection : uses
+BillDAOImpl ..> DBConnection : uses
+UserDAOImpl ..> DBConnection : uses
+
+class RegisterAppointmentServlet
+class BillServlet
+class LoginServlet
+
+RegisterAppointmentServlet --> AppointmentService
+BillServlet --> AppointmentService
+BillServlet --> BillService
+LoginServlet --> AuthService
+
+@enduml

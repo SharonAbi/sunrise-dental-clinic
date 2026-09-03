@@ -1,0 +1,93 @@
+@startuml 02_class_domain
+skinparam classAttributeIconSize 0
+skinparam backgroundColor white
+
+enum AppointmentStatus {
+  SCHEDULED
+  COMPLETED
+  CANCELLED
+}
+
+enum Role {
+  ADMIN
+  STAFF
+}
+
+class Patient {
+  -id : int
+  -name : String
+  -address : String
+  -contactNumber : String
+  --
+  +getId() : int
+  +getName() : String
+  +getAddress() : String
+  +getContactNumber() : String
+}
+
+class Dentist {
+  -id : int
+  -name : String
+  -specialization : String
+  --
+  +getId() : int
+  +getName() : String
+  +getSpecialization() : String
+}
+
+class Treatment {
+  -id : int
+  -name : String
+  -fee : double
+  --
+  +getId() : int
+  +getName() : String
+  +getFee() : double
+}
+
+class Appointment {
+  -id : int
+  -appointmentNumber : String
+  -appointmentDate : LocalDate
+  -appointmentTime : LocalTime
+  -status : AppointmentStatus
+  --
+  +getId() : int
+  +getAppointmentNumber() : String
+  +getAppointmentDate() : LocalDate
+  +getAppointmentTime() : LocalTime
+  +getStatus() : AppointmentStatus
+}
+
+class Bill {
+  -id : int
+  -consultationFee : double
+  -treatmentFee : double
+  -discountAmount : double
+  -totalAmount : double
+  -insuranceApplied : boolean
+  -generatedAt : LocalDateTime
+  --
+  +getTotalAmount() : double
+  +isInsuranceApplied() : boolean
+}
+
+class User {
+  -id : int
+  -username : String
+  -passwordHash : String
+  -fullName : String
+  -role : Role
+  --
+  +getUsername() : String
+  +getRole() : Role
+}
+
+Appointment "0..*" --> "1" Patient : books >
+Appointment "0..*" --> "1" Dentist : assigned to >
+Appointment "0..*" --> "1" Treatment : for >
+Appointment "1" --> "1" AppointmentStatus
+Bill "0..1" --> "1" Appointment : bills >
+User "1" --> "1" Role
+
+@enduml

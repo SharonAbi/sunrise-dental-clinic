@@ -1,0 +1,41 @@
+@startuml 05_sequence_register
+skinparam backgroundColor white
+
+actor Staff
+participant "RegisterAppointmentServlet" as Servlet
+participant "ValidationUtil" as Val
+participant "AppointmentService" as Svc
+participant "PatientDAO" as PDAO
+participant "AppointmentDAO" as ADAO
+database "MySQL" as DB
+
+Staff -> Servlet : POST /register-appointment (form data)
+Servlet -> Val : isValidName / isValidContactNumber /\nisValidDate / isValidTime
+Val --> Servlet : validation result
+
+alt input invalid
+  Servlet --> Staff : re-display form with error list
+else input valid
+  Servlet -> Svc : registerAppointment(patient, dentist,\ntreatment, date, time)
+  Svc -> PDAO : save(patient)
+  PDAO -> DB : INSERT INTO patients ...
+  DB --> PDAO : generated patient id
+  PDAO --> Svc : Patient (with id)
+
+  loop until unique
+    Svc -> Svc : generate appointment number
+    Svc -> ADAO : existsByAppointmentNumber(number)
+    ADAO -> DB : SELECT COUNT(*) ...
+    DB --> ADAO : count
+    ADAO --> Svc : boolean
+  end
+
+  Svc -> ADAO : save(appointment)
+  ADAO -> DB : INSERT INTO appointments ...
+  DB --> ADAO : generated appointment id
+  ADAO --> Svc : Appointment
+  Svc --> Servlet : Appointment
+  Servlet --> Staff : forward to appointmentDetails.jsp
+end
+
+@enduml
