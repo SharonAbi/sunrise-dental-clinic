@@ -86,6 +86,8 @@ public class RegisterAppointmentServlet extends HttpServlet {
         }
         if (!ValidationUtil.isValidTime(time)) {
             errors.add("Please select a valid appointment time.");
+        } else if (!ValidationUtil.isWithinClinicHours(LocalTime.parse(time))) {
+            errors.add("Appointment time must be between 09:00 and 17:00.");
         }
         return errors;
     }

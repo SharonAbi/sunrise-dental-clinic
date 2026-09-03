@@ -48,4 +48,12 @@ public final class ValidationUtil {
     public static boolean isFutureOrTodayDate(LocalDate date) {
         return !date.isBefore(LocalDate.now());
     }
+
+    private static final LocalTime CLINIC_OPENS = LocalTime.of(9, 0);
+    private static final LocalTime CLINIC_CLOSES = LocalTime.of(17, 0);
+
+    /** Clinic operates 09:00 (inclusive) to 17:00 (exclusive), Mon-Sat. */
+    public static boolean isWithinClinicHours(LocalTime time) {
+        return !time.isBefore(CLINIC_OPENS) && time.isBefore(CLINIC_CLOSES);
+    }
 }
