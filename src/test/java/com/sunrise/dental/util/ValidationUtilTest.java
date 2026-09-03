@@ -56,4 +56,24 @@ class ValidationUtilTest {
     void isFutureOrTodayDate_acceptsToday() {
         assertTrue(ValidationUtil.isFutureOrTodayDate(java.time.LocalDate.now()));
     }
+
+    @Test
+    void isWithinClinicHours_acceptsTimeDuringOperatingHours() {
+        assertTrue(ValidationUtil.isWithinClinicHours(java.time.LocalTime.of(10, 30)));
+    }
+
+    @Test
+    void isWithinClinicHours_acceptsOpeningTimeExactly() {
+        assertTrue(ValidationUtil.isWithinClinicHours(java.time.LocalTime.of(9, 0)));
+    }
+
+    @Test
+    void isWithinClinicHours_rejectsBeforeOpening() {
+        assertFalse(ValidationUtil.isWithinClinicHours(java.time.LocalTime.of(8, 59)));
+    }
+
+    @Test
+    void isWithinClinicHours_rejectsAtOrAfterClosing() {
+        assertFalse(ValidationUtil.isWithinClinicHours(java.time.LocalTime.of(17, 0)));
+    }
 }
