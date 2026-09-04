@@ -9,6 +9,7 @@ const {
 } = require("docx");
 
 const UML_DIR = path.resolve(__dirname, "../uml");
+const SHOT_DIR = path.resolve(__dirname, "screenshots");
 const FONT = "Times New Roman";
 const BODY_SIZE = 24;   // 12pt
 const HEAD_SIZE = 28;   // 14pt
@@ -84,8 +85,8 @@ function placeholder(title, detail) {
     ],
   });
 }
-function imagePara(file, widthPx, heightPx, caption) {
-  const data = fs.readFileSync(path.join(UML_DIR, file));
+function imagePara(file, widthPx, heightPx, caption, baseDir = UML_DIR) {
+  const data = fs.readFileSync(path.join(baseDir, file));
   return [
     new Paragraph({
       alignment: AlignmentType.CENTER,
@@ -427,16 +428,17 @@ const taskD = [
 
   h2("5.1 Repository Setup"),
   p("The project is hosted in a public GitHub repository at https://github.com/SharonAbi/sunrise-dental-clinic, so it is accessible to markers without requiring an invitation. The repository contains the full Maven source tree, the SQL schema, the UML diagram sources and rendered images (docs/uml), the testing documentation (docs/testing), and the GitHub Actions CI workflow (.github/workflows)."),
-  placeholder("SCREENSHOT — REPOSITORY HOME PAGE", "Open https://github.com/SharonAbi/sunrise-dental-clinic and screenshot the repository home page, showing the file listing and the \"Public\" label."),
+  ...imagePara("repo-home.png", ...Object.values(scale(1280, 900, 500)), "Figure 7: Repository home page, showing the Public visibility label and file listing.", SHOT_DIR),
 
   h2("5.2 Commit History and Version Control Techniques"),
   p("Rather than a single bulk upload, the project history is organised into logically separated commits, each covering one coherent unit of work: initial project scaffold; domain model classes; persistence layer (DBConnection singleton + DAOs); service layer with the Strategy pattern; web layer (servlets, filter, JSP views); SQL schema; unit tests; UML diagrams; a paired \"red\" then \"green\" commit demonstrating TDD; additional service test coverage; and the CI workflow itself. This mirrors how a real feature branch is built up incrementally, and makes the history itself readable evidence of the development process, rather than a single commit that hides how the system was actually built."),
-  placeholder("SCREENSHOT — COMMIT HISTORY", "Open https://github.com/SharonAbi/sunrise-dental-clinic/commits/main and screenshot the commit list, showing the sequence of descriptive commit messages and dates."),
+  ...imagePara("commits.png", ...Object.values(scale(1280, 1600, 480)), "Figure 8: Commit history on GitHub, showing the sequence of descriptive, logically-scoped commits.", SHOT_DIR),
   p("Standard version control practices used include: descriptive, imperative-mood commit messages explaining why a change was made, not just what changed; small, logically scoped commits rather than monolithic ones; a .gitignore excluding build output (target/) and IDE files from version control; and use of the default main branch with a linear history (no long-lived feature branches were needed given the project's size, but the same commit-message discipline would extend directly to a branch-and-pull-request workflow for a larger team)."),
 
   h2("5.3 Continuous Integration Workflow"),
   p("A GitHub Actions workflow (see section 4.5 and Appendix C) runs automatically on every push to main, checking out the repository, installing JDK 11, and running the full Maven test suite, then building the WAR file. This gives an auditable, automatic record that a given commit actually builds and passes its tests — the workflow run history on GitHub is itself evidence of this, independent of anything claimed in this report."),
-  placeholder("SCREENSHOT — CI WORKFLOW FILE + PASSING RUNS LIST", "Screenshot the Actions tab showing the list of workflow runs (ideally several, from different commits) with green checkmarks."),
+  ...imagePara("actions-list.png", ...Object.values(scale(1280, 900, 500)), "Figure 9: GitHub Actions run history — three consecutive green (passing) CI runs.", SHOT_DIR),
+  placeholder("OPTIONAL: MORE CI SCREENSHOTS", "As you add more commits over the following days (see section 5.4), you may want to re-capture this screenshot so it shows a longer, more convincing run history by submission time."),
 
   h2("5.4 Ongoing Version History"),
   p("[STUDENT TO COMPLETE: this report was drafted with the repository history in place up to the commit that added this document. Before final submission, continue committing genuine incremental changes on subsequent days — for example, filling in the screenshot placeholders and committing the resulting documentation, or making a small, real code change with its own test. Briefly describe below what changed on each subsequent day, to give the marker a written trail alongside the commit history itself.]"),
