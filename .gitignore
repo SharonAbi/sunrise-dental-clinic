@@ -7,3 +7,8 @@ target/
 .classpath
 .project
 *.log
+docs/report/node_modules/
+docs/report/package-lock.json
+docs/report/*.pdf
+docs/report/page-*.jpg
+docs/report/_check/
