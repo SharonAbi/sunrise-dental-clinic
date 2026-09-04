@@ -428,7 +428,7 @@ const taskD = [
 
   h2("5.1 Repository Setup"),
   p("The project is hosted in a public GitHub repository at https://github.com/SharonAbi/sunrise-dental-clinic, so it is accessible to markers without requiring an invitation. The repository contains the full Maven source tree, the SQL schema, the UML diagram sources and rendered images (docs/uml), the testing documentation (docs/testing), and the GitHub Actions CI workflow (.github/workflows)."),
-  ...imagePara("repo-home.png", ...Object.values(scale(1280, 900, 500)), "Figure 7: Repository home page, showing the Public visibility label and file listing.", SHOT_DIR),
+  ...imagePara("repo-home.png", ...Object.values(scale(915, 900, 460)), "Figure 7: Repository home page, showing the Public visibility label and file listing.", SHOT_DIR),
 
   h2("5.2 Commit History and Version Control Techniques"),
   p("Rather than a single bulk upload, the project history is organised into logically separated commits, each covering one coherent unit of work: initial project scaffold; domain model classes; persistence layer (DBConnection singleton + DAOs); service layer with the Strategy pattern; web layer (servlets, filter, JSP views); SQL schema; unit tests; UML diagrams; a paired \"red\" then \"green\" commit demonstrating TDD; additional service test coverage; and the CI workflow itself. This mirrors how a real feature branch is built up incrementally, and makes the history itself readable evidence of the development process, rather than a single commit that hides how the system was actually built."),
