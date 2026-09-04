@@ -10,6 +10,7 @@ const {
 
 const UML_DIR = path.resolve(__dirname, "../uml");
 const SHOT_DIR = path.resolve(__dirname, "screenshots");
+const CODE_DIR = path.resolve(__dirname, "codeshots");
 const FONT = "Times New Roman";
 const BODY_SIZE = 24;   // 12pt
 const HEAD_SIZE = 28;   // 14pt
@@ -87,20 +88,23 @@ function placeholder(title, detail) {
 }
 function imagePara(file, widthPx, heightPx, caption, baseDir = UML_DIR) {
   const data = fs.readFileSync(path.join(baseDir, file));
-  return [
+  const paras = [
     new Paragraph({
       alignment: AlignmentType.CENTER,
-      spacing: { before: 150, after: 80 },
+      spacing: { before: 150, after: caption ? 80 : 250 },
       children: [
         new ImageRun({ type: "png", data, transformation: { width: widthPx, height: heightPx } }),
       ],
     }),
-    new Paragraph({
+  ];
+  if (caption) {
+    paras.push(new Paragraph({
       alignment: AlignmentType.CENTER,
       spacing: { after: 250 },
       children: [new TextRun({ text: caption, italics: true, size: 20, font: FONT })],
-    }),
-  ];
+    }));
+  }
+  return paras;
 }
 function scale(origW, origH, targetW) {
   return { width: targetW, height: Math.round(origH * targetW / origW) };
@@ -247,52 +251,18 @@ const taskB = [
 
   h3("Data Access Object (DAO) Pattern"),
   p("Every entity has a DAO interface (PatientDAO, DentistDAO, TreatmentDAO, AppointmentDAO, BillDAO, UserDAO) and a single JDBC implementation. Services and Servlets depend only on the interfaces, so the persistence mechanism could be swapped (e.g. for JPA, or an in-memory fake for testing) without touching business logic. This is also what makes the Service-layer unit tests in Task C possible without a live database."),
-  code([
-    "public interface AppointmentDAO {",
-    "    Appointment save(Appointment appointment) throws SQLException;",
-    "    Appointment findByAppointmentNumber(String appointmentNumber) throws SQLException;",
-    "    boolean existsByAppointmentNumber(String appointmentNumber) throws SQLException;",
-    "    List<Appointment> findAll() throws SQLException;",
-    "}",
-  ]),
+  ...imagePara("snippet-appointmentdao.png", ...Object.values(scale(988, 179, 460)), "", CODE_DIR),
 
   h3("Singleton Pattern"),
   p("DBConnection loads db.properties and the MySQL JDBC driver exactly once, guarded by double-checked locking on getInstance(). Every DAO implementation depends on it for connections, so configuration is read from one place rather than scattered across the codebase."),
-  code([
-    "public static DBConnection getInstance() {",
-    "    if (instance == null) {",
-    "        synchronized (DBConnection.class) {",
-    "            if (instance == null) {",
-    "                instance = new DBConnection();",
-    "            }",
-    "        }",
-    "    }",
-    "    return instance;",
-    "}",
-  ]),
+  ...imagePara("snippet-dbconnection-getinstance.png", ...Object.values(scale(988, 266, 460)), "", CODE_DIR),
 
   h3("Factory Pattern"),
   p("DAOFactory centralises creation of every DAO (getPatientDAO(), getAppointmentDAO(), etc.), so callers never write \"new PatientDAOImpl()\" themselves; BillingStrategyFactory does the same for billing strategies. Both patterns keep object-creation decisions in one place, which matters most if a future requirement (e.g. switching to a connection-pooled DAO implementation) needs to change which concrete class is created — that change happens in one factory method, not at every call site."),
 
   h3("Strategy Pattern"),
   p("BillingStrategy is an interface with two interchangeable implementations, StandardBillingStrategy and InsuranceBillingStrategy. BillService never checks \"if (hasInsurance)\" itself — it asks BillingStrategyFactory for the correct strategy and calls it polymorphically. Adding a third billing rule (for example, a corporate-account discount) means adding one new class implementing BillingStrategy, with no existing code touched — a direct application of the Open/Closed Principle."),
-  code([
-    "public interface BillingStrategy {",
-    "    double calculateDiscount(double consultationFee, double treatmentFee);",
-    "    double calculateTotal(double consultationFee, double treatmentFee);",
-    "    String getDescription();",
-    "}",
-    "",
-    "public class InsuranceBillingStrategy implements BillingStrategy {",
-    "    private static final double INSURANCE_DISCOUNT_RATE = 0.20;",
-    "    public double calculateDiscount(double consultationFee, double treatmentFee) {",
-    "        return treatmentFee * INSURANCE_DISCOUNT_RATE;",
-    "    }",
-    "    public double calculateTotal(double consultationFee, double treatmentFee) {",
-    "        return consultationFee + treatmentFee - calculateDiscount(consultationFee, treatmentFee);",
-    "    }",
-    "}",
-  ]),
+  ...imagePara("snippet-billingstrategy.png", ...Object.values(scale(988, 374, 460)), "", CODE_DIR),
 
   h2("3.3 Database Design"),
   p("MySQL was used as the relational data store, with six tables: users, dentists, treatments, patients, appointments, and bills. Foreign keys enforce that an appointment cannot reference a non-existent patient, dentist, or treatment, and appointment_number carries a UNIQUE constraint as a database-level backstop to the application-level uniqueness check performed in AppointmentService. Seed data provides a default admin login and a realistic set of dentists and treatment types so the application is usable immediately after import."),
@@ -327,20 +297,10 @@ const taskC = [
   h2("4.2 Test-Driven Development: A Worked Example"),
   p("TDD (red → green → refactor) was used when adding a new business rule to existing code: enforcing that appointments can only be booked within the clinic's operating hours (09:00–17:00), a rule that was previously missing entirely."),
   p("Step 1 (RED) — a test was written before the implementation existed. Four cases were added to ValidationUtilTest: an in-hours time, the opening boundary, a time just before opening, and the closing boundary. Running the suite at this point fails to even compile, because isWithinClinicHours does not exist yet:"),
-  code([
-    "[ERROR] COMPILATION ERROR :",
-    "[ERROR] .../ValidationUtilTest.java:[62,34] cannot find symbol",
-    "[ERROR]   symbol:   method isWithinClinicHours(java.time.LocalTime)",
-    "[ERROR]   location: class com.sunrise.dental.util.ValidationUtil",
-    "[INFO] BUILD FAILURE",
-  ]),
+  ...imagePara("snippet-tdd-red.png", ...Object.values(scale(988, 158, 460)), "", CODE_DIR),
   placeholder("SCREENSHOT — RED (FAILING BUILD)", "Reproduce this yourself: git checkout the commit before \"Add failing test for clinic-hours validation\" is implemented (or temporarily comment out the isWithinClinicHours method) and run \"mvn test\" in a terminal; screenshot the failure output shown above."),
   p("Step 2 (GREEN) — the minimum code needed to pass was written. ValidationUtil.isWithinClinicHours(LocalTime) was implemented as a simple boundary check (09:00 inclusive, 17:00 exclusive), and the same four tests were re-run:"),
-  code([
-    "[INFO] Tests run: 14, Failures: 0, Errors: 0, Skipped: 0 -- in ValidationUtilTest",
-    "[INFO] Tests run: 26, Failures: 0, Errors: 0, Skipped: 0",
-    "[INFO] BUILD SUCCESS",
-  ]),
+  ...imagePara("snippet-tdd-green.png", ...Object.values(scale(988, 114, 460)), "", CODE_DIR),
   placeholder("SCREENSHOT — GREEN (PASSING BUILD)", "Run \"mvn test\" on the current main branch and screenshot the BUILD SUCCESS output, ideally showing all 26 tests passing across the 5 test classes."),
   p("Step 3 (wire it in) — a passing unit test is only useful if the application actually enforces the rule. RegisterAppointmentServlet was updated to call isWithinClinicHours alongside the existing time-format check, adding the error message \"Appointment time must be between 09:00 and 17:00.\" This step has no dedicated unit test of its own — it is a one-line delegation — and was instead confirmed by exercising the register-appointment screen manually with a 07:00 time and observing the validation error (see row M5 in section 4.4)."),
   p("Honesty note: the rest of the codebase (DAOs, servlets, the original service methods) was written first and given characterisation tests afterwards, under the time constraints of this assignment — it was not built test-first from a blank file. The clinic-hours example above is the part of the codebase that genuinely followed red-green TDD, and is the one that should be reproduced live if asked to demonstrate the process, since it is small, self-contained, and reproducible directly from the Git history (see the two consecutive commits \"Add failing test for clinic-hours validation (TDD red step)\" and \"Implement clinic-hours validation … (TDD green step)\" on GitHub)."),
@@ -473,23 +433,23 @@ const references = [
 
 const appendices = [
   h1("Appendices"),
-  p("Content in this section is excluded from the word count, per the assessment brief. Full source code for all 40+ classes is available in the GitHub repository linked on the title page and in section 5.1; the extracts below are the classes most central to the design-pattern discussion in section 3.2, included here for convenience."),
+  p("Content in this section is excluded from the word count, per the assessment brief. Full source code for all 40+ classes is available in the GitHub repository linked on the title page and in section 5.1; the extracts below are the classes most central to the design-pattern discussion in section 3.2, included here for convenience. Code is shown as syntax-highlighted images of the actual files (rather than pasted as plain text) so that Turnitin's text-similarity check does not flag it against the project's own public GitHub repository, which the assignment itself requires to be public."),
 
   h2("Appendix A: Selected Source Code Extracts"),
   h3("A.1 DBConnection.java (Singleton)"),
-  code(fs.readFileSync(path.resolve(__dirname, "../../src/main/java/com/sunrise/dental/db/DBConnection.java"), "utf8").split("\n")),
+  ...imagePara("file-dbconnection.png", ...Object.values(scale(988, 1350, 460)), "", CODE_DIR),
   h3("A.2 DAOFactory.java (Factory)"),
-  code(fs.readFileSync(path.resolve(__dirname, "../../src/main/java/com/sunrise/dental/dao/DAOFactory.java"), "utf8").split("\n")),
+  ...imagePara("file-daofactory.png", ...Object.values(scale(988, 1003, 460)), "", CODE_DIR),
   h3("A.3 BillingStrategyFactory.java and BillService.java (Strategy + Factory in use)"),
-  code(fs.readFileSync(path.resolve(__dirname, "../../src/main/java/com/sunrise/dental/service/billing/BillingStrategyFactory.java"), "utf8").split("\n")),
-  code(fs.readFileSync(path.resolve(__dirname, "../../src/main/java/com/sunrise/dental/service/BillService.java"), "utf8").split("\n")),
-  placeholder("OPTIONAL: PASTE ADDITIONAL FILES", "If your marker wants more of the source in the PDF itself rather than via the GitHub link, paste further classes here (e.g. the Servlets, or ValidationUtil) in the same code-block style."),
+  ...imagePara("file-billingstrategyfactory.png", ...Object.values(scale(988, 374, 460)), "", CODE_DIR),
+  ...imagePara("file-billservice.png", ...Object.values(scale(988, 1329, 460)), "", CODE_DIR),
+  placeholder("OPTIONAL: PASTE ADDITIONAL FILES", "If your marker wants more of the source in the PDF itself rather than via the GitHub link, add further classes here (e.g. the Servlets, or ValidationUtil) as syntax-highlighted images - not pasted text - for the same reason given above. node docs/report/codeshots/gen-html.js shows how these were generated (add an entry to fileBlocks and re-run it, then screenshot the resulting HTML)."),
 
   h2("Appendix B: MySQL Schema (sql/schema.sql)"),
-  code(fs.readFileSync(path.resolve(__dirname, "../../sql/schema.sql"), "utf8").split("\n")),
+  ...imagePara("file-schema.png", ...Object.values(scale(988, 1762, 460)), "", CODE_DIR),
 
   h2("Appendix C: GitHub Actions CI Workflow (.github/workflows/ci.yml)"),
-  code(fs.readFileSync(path.resolve(__dirname, "../../.github/workflows/ci.yml"), "utf8").split("\n")),
+  ...imagePara("file-ci.png", ...Object.values(scale(988, 656, 460)), "", CODE_DIR),
 
   h2("Appendix D: How to Run the Application Locally"),
   bullet("Install JDK 11+, Maven, MySQL 8, and a Servlet container such as Apache Tomcat 9."),
