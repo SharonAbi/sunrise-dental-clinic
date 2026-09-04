@@ -296,15 +296,24 @@ const taskB = [
 
   h2("3.3 Database Design"),
   p("MySQL was used as the relational data store, with six tables: users, dentists, treatments, patients, appointments, and bills. Foreign keys enforce that an appointment cannot reference a non-existent patient, dentist, or treatment, and appointment_number carries a UNIQUE constraint as a database-level backstop to the application-level uniqueness check performed in AppointmentService. Seed data provides a default admin login and a realistic set of dentists and treatment types so the application is usable immediately after import."),
-  placeholder("SCREENSHOT — DATABASE SCHEMA", "Open the sunrise_dental schema in MySQL Workbench (or run \"SHOW TABLES;\" / \"DESCRIBE appointments;\" etc. in the MySQL CLI) and capture the table list and/or an ER diagram (Workbench: Database > Reverse Engineer)."),
+  ...imagePara("db-schema.png", ...Object.values(scale(764, 800, 360)), "Figure 7: sunrise_dental schema - table list and structure of the appointments and bills tables (real mysql CLI output).", SHOT_DIR),
 
   h2("3.4 Web Service (Distributed / Web Services Requirement)"),
   p("To satisfy the requirement that the program be a distributed application with web services, AppointmentApiServlet exposes a small RESTful JSON endpoint at /api/appointments?number=<appointmentNumber>, independent of the JSP-rendered pages. It returns the appointment as JSON (serialised with Gson) on success, HTTP 404 with a JSON error body when the appointment does not exist, and HTTP 400 when the number parameter is missing — allowing another system (e.g. a front-desk kiosk, a mobile app, or an integration test) to query appointment data over HTTP without depending on the HTML views at all."),
-  placeholder("SCREENSHOT — WEB SERVICE RESPONSE", "With the app running, open http://localhost:8080/sunrise-dental-clinic/api/appointments?number=<a real appointment number> in a browser (or Postman) and capture the JSON response. Also capture the 404 response for a made-up number, to show error handling."),
+  ...imagePara("app-api-valid.png", ...Object.values(scale(897, 108, 480)), "Figure 8: JSON response from GET /api/appointments?number=APT-20260904-1232.", SHOT_DIR),
+  ...imagePara("app-api-notfound.png", ...Object.values(scale(897, 63, 480)), "Figure 9: JSON error body (HTTP 404) for an unknown appointment number.", SHOT_DIR),
 
   h2("3.5 User Interfaces and Validation"),
-  p("Six screens were built to cover the required functionality: Login, Dashboard (main menu), Register New Appointment, Display Appointment Details, Calculate & Print Bill (a print-friendly receipt), and Help. All input is validated server-side in ValidationUtil before anything reaches the database — patient name (letters/spaces only), a 10-digit contact number starting with 0, a date that is not in the past, and (added via test-driven development, see section 4.2) a time within the clinic's 09:00–17:00 operating hours. Validation failures are collected and displayed together above the form, rather than one at a time, so the user can correct every problem in a single pass."),
-  placeholder("SCREENSHOTS — APPLICATION SCREENS (6+)", "Run the application locally (see Appendix D for setup steps) and capture: (1) the login screen, (2) the dashboard/main menu after logging in, (3) the register-appointment form filled in, (4) the appointment-details screen after a successful registration, (5) the same form re-submitted with an invalid contact number / past date / out-of-hours time, showing the validation error list, (6) the calculate-and-print-bill receipt screen, and (7) the help screen."),
+  p("Six screens were built to cover the required functionality: Login, Dashboard (main menu), Register New Appointment, Display Appointment Details, Calculate & Print Bill (a print-friendly receipt), and Help. All input is validated server-side in ValidationUtil before anything reaches the database — patient name (letters/spaces only), a 10-digit contact number starting with 0, a date that is not in the past, and (added via test-driven development, see section 4.2) a time within the clinic's 09:00–17:00 operating hours. Validation failures are collected and displayed together above the form, rather than one at a time, so the user can correct every problem in a single pass. All screens below were captured from the application actually running against a local MySQL instance under Tomcat 9, not mocked up."),
+  ...imagePara("app-login.png", ...Object.values(scale(714, 519, 340)), "Figure 10: Login screen.", SHOT_DIR),
+  ...imagePara("app-login-error.png", ...Object.values(scale(714, 519, 340)), "Figure 11: Login with an incorrect password.", SHOT_DIR),
+  ...imagePara("app-dashboard.png", ...Object.values(scale(882, 308, 460)), "Figure 12: Dashboard / main menu after a successful login.", SHOT_DIR),
+  ...imagePara("app-register-form.png", ...Object.values(scale(926, 669, 420)), "Figure 13: Register New Appointment form.", SHOT_DIR),
+  ...imagePara("app-validation-errors.png", ...Object.values(scale(927, 619, 460)), "Figure 14: Validation errors shown together above the form (past date + out-of-hours time).", SHOT_DIR),
+  ...imagePara("app-appointment-details.png", ...Object.values(scale(927, 669, 420)), "Figure 15: Appointment Details after a successful registration (real generated appointment number).", SHOT_DIR),
+  ...imagePara("app-search-notfound.png", ...Object.values(scale(882, 389, 460)), "Figure 16: Search result for a non-existent appointment number.", SHOT_DIR),
+  ...imagePara("app-bill-receipt.png", ...Object.values(scale(882, 632, 440)), "Figure 17: Calculate & Print Bill receipt (Rs. 1500 + Rs. 3500 = Rs. 5000).", SHOT_DIR),
+  ...imagePara("app-help.png", ...Object.values(scale(882, 336, 460)), "Figure 18: Help screen.", SHOT_DIR),
 ];
 
 // ---------- TASK C ----------
@@ -373,26 +382,26 @@ function testPlanTable() {
 
 const taskC2 = [
   h2("4.4 Manual / Exploratory Test Log (DAO + UI Layer)"),
-  p("Since DAOs and servlets are integration/UI glue rather than unit-tested, they were verified by hand against a running instance. The table below should be completed with Pass/Fail and a short note while exercising the running application, then screenshotted."),
+  p("Since DAOs and servlets are integration/UI glue rather than unit-tested, they were verified by hand against a real running instance (Tomcat 9 + MySQL 8, not mocked). Every row below was actually exercised - via the browser for the UI cases and via curl for the two session/idempotency checks that have no useful screenshot - and passed; screenshots for the UI-visible cases are the numbered figures in section 3.5, cross-referenced below rather than repeated."),
 ];
 
 function manualLogTable() {
   const rows = [
-    ["#", "Action", "Expected result", "Pass/Fail"],
-    ["M1", "Log in with admin / admin123", "Redirected to dashboard", ""],
-    ["M2", "Log in with wrong password", "Error shown, stays on login page", ""],
-    ["M3", "Visit /dashboard while logged out", "Redirected to login (AuthFilter)", ""],
-    ["M4", "Register an appointment with all valid fields", "Appointment number shown on confirmation", ""],
-    ["M5", "Register an appointment with a 07:00 time", "\"must be between 09:00 and 17:00\" error", ""],
-    ["M6", "Register an appointment with a past date", "\"cannot be in the past\" error", ""],
-    ["M7", "Search for the appointment number from M4", "Full appointment details displayed", ""],
-    ["M8", "Search for a non-existent appointment number", "\"No appointment found\" message", ""],
-    ["M9", "Calculate bill, no insurance ticked", "Total = consultation fee + treatment fee", ""],
-    ["M10", "Calculate bill again for the same appointment, ticking insurance", "Returns the same bill as M9 (idempotent)", ""],
-    ["M11", "GET /api/appointments?number=<valid>", "JSON body with appointment fields", ""],
-    ["M12", "GET /api/appointments?number=<invalid>", "HTTP 404 with JSON error body", ""],
+    ["#", "Action", "Expected result", "Result"],
+    ["M1", "Log in with admin / admin123", "Redirected to dashboard", "Pass (Fig. 12)"],
+    ["M2", "Log in with wrong password", "Error shown, stays on login page", "Pass (Fig. 11)"],
+    ["M3", "Visit /dashboard while logged out", "Redirected to login (AuthFilter)", "Pass (HTTP 302 to /login, verified via curl)"],
+    ["M4", "Register an appointment with all valid fields", "Appointment number shown on confirmation", "Pass (Fig. 15) - APT-20260904-1232 generated"],
+    ["M5", "Register an appointment with a 07:00 time", "\"must be between 09:00 and 17:00\" error", "Pass (Fig. 14)"],
+    ["M6", "Register an appointment with a past date", "\"cannot be in the past\" error", "Pass (Fig. 14, same submission as M5)"],
+    ["M7", "Search for the appointment number from M4", "Full appointment details displayed", "Pass (Fig. 15)"],
+    ["M8", "Search for a non-existent appointment number", "\"No appointment found\" message", "Pass (Fig. 16)"],
+    ["M9", "Calculate bill, no insurance ticked", "Total = consultation fee + treatment fee", "Pass (Fig. 17) - Rs.1500+Rs.3500=Rs.5000"],
+    ["M10", "Calculate bill again for the same appointment, ticking insurance", "Returns the same bill as M9 (idempotent)", "Pass - re-request still returned Rs. 5000, not the discounted Rs. 4300 (verified via curl)"],
+    ["M11", "GET /api/appointments?number=<valid>", "JSON body with appointment fields", "Pass (Fig. 8)"],
+    ["M12", "GET /api/appointments?number=<invalid>", "HTTP 404 with JSON error body", "Pass (Fig. 9)"],
   ];
-  const colWidths = [700, 3000, 3000, 1500];
+  const colWidths = [500, 2600, 2600, 2500];
   return new Table({
     width: { size: 8200, type: WidthType.DXA },
     columnWidths: colWidths,
@@ -410,8 +419,6 @@ function manualLogTable() {
 }
 
 const taskC3 = [
-  placeholder("SCREENSHOTS — MANUAL TEST LOG (M1–M12)", "For each row above, perform the action against the running application and capture a screenshot proving the expected result occurred; fill in Pass/Fail. At minimum, screenshot M1, M4, M5, M9, M11, and M12."),
-
   h2("4.5 Test Automation"),
   p("Two layers of automation are in place. First, \"mvn test\" (Maven Surefire) runs all 26 JUnit 5 tests locally in a few seconds with no database required, as shown by the BUILD SUCCESS output in section 4.2. Second, a GitHub Actions workflow (.github/workflows/ci.yml) runs \"mvn test\" and then \"mvn package\" automatically on every push and pull request to the main branch. This is genuine continuous integration rather than a local habit: a broken commit is caught even if nobody remembers to run the tests by hand before pushing."),
   placeholder("SCREENSHOT — GITHUB ACTIONS CI RUN", "Open the \"Actions\" tab at https://github.com/SharonAbi/sunrise-dental-clinic/actions and screenshot a green (passing) workflow run, ideally showing the expanded \"Run unit tests\" step."),
@@ -428,16 +435,16 @@ const taskD = [
 
   h2("5.1 Repository Setup"),
   p("The project is hosted in a public GitHub repository at https://github.com/SharonAbi/sunrise-dental-clinic, so it is accessible to markers without requiring an invitation. The repository contains the full Maven source tree, the SQL schema, the UML diagram sources and rendered images (docs/uml), the testing documentation (docs/testing), and the GitHub Actions CI workflow (.github/workflows)."),
-  ...imagePara("repo-home.png", ...Object.values(scale(915, 900, 460)), "Figure 7: Repository home page, showing the Public visibility label and file listing.", SHOT_DIR),
+  ...imagePara("repo-home.png", ...Object.values(scale(915, 900, 460)), "Figure 19: Repository home page, showing the Public visibility label and file listing.", SHOT_DIR),
 
   h2("5.2 Commit History and Version Control Techniques"),
   p("Rather than a single bulk upload, the project history is organised into logically separated commits, each covering one coherent unit of work: initial project scaffold; domain model classes; persistence layer (DBConnection singleton + DAOs); service layer with the Strategy pattern; web layer (servlets, filter, JSP views); SQL schema; unit tests; UML diagrams; a paired \"red\" then \"green\" commit demonstrating TDD; additional service test coverage; and the CI workflow itself. This mirrors how a real feature branch is built up incrementally, and makes the history itself readable evidence of the development process, rather than a single commit that hides how the system was actually built."),
-  ...imagePara("commits.png", ...Object.values(scale(1280, 1600, 480)), "Figure 8: Commit history on GitHub, showing the sequence of descriptive, logically-scoped commits.", SHOT_DIR),
+  ...imagePara("commits.png", ...Object.values(scale(1280, 1600, 480)), "Figure 20: Commit history on GitHub, showing the sequence of descriptive, logically-scoped commits.", SHOT_DIR),
   p("Standard version control practices used include: descriptive, imperative-mood commit messages explaining why a change was made, not just what changed; small, logically scoped commits rather than monolithic ones; a .gitignore excluding build output (target/) and IDE files from version control; and use of the default main branch with a linear history (no long-lived feature branches were needed given the project's size, but the same commit-message discipline would extend directly to a branch-and-pull-request workflow for a larger team)."),
 
   h2("5.3 Continuous Integration Workflow"),
   p("A GitHub Actions workflow (see section 4.5 and Appendix C) runs automatically on every push to main, checking out the repository, installing JDK 11, and running the full Maven test suite, then building the WAR file. This gives an auditable, automatic record that a given commit actually builds and passes its tests — the workflow run history on GitHub is itself evidence of this, independent of anything claimed in this report."),
-  ...imagePara("actions-list.png", ...Object.values(scale(1280, 900, 500)), "Figure 9: GitHub Actions run history — three consecutive green (passing) CI runs.", SHOT_DIR),
+  ...imagePara("actions-list.png", ...Object.values(scale(1280, 900, 500)), "Figure 21: GitHub Actions run history — three consecutive green (passing) CI runs.", SHOT_DIR),
   placeholder("OPTIONAL: MORE CI SCREENSHOTS", "As you add more commits over the following days (see section 5.4), you may want to re-capture this screenshot so it shows a longer, more convincing run history by submission time."),
 
   h2("5.4 Ongoing Version History"),
@@ -487,11 +494,17 @@ const appendices = [
   h2("Appendix D: How to Run the Application Locally"),
   bullet("Install JDK 11+, Maven, MySQL 8, and a Servlet container such as Apache Tomcat 9."),
   bullet("Create the database and load the schema: mysql -u root -p < sql/schema.sql"),
-  bullet("Edit src/main/resources/db.properties with your local MySQL username/password."),
+  bullet("Copy src/main/resources/db.properties.example to db.properties and fill in your local MySQL username/password (db.properties is gitignored on purpose so real credentials are never committed)."),
   bullet("Build the WAR: mvn clean package"),
   bullet("Deploy target/sunrise-dental-clinic.war to Tomcat's webapps folder (or use an IDE's built-in server)."),
   bullet("Open http://localhost:8080/sunrise-dental-clinic/ and log in with admin / admin123."),
   p(""),
+
+  h3("D.1 Deployment note (real issue hit during testing)"),
+  p("While actually deploying this project - as opposed to just compiling it - two environment-specific issues showed up that are worth documenting, since they were not bugs in the application code itself:"),
+  bullet("Tomcat 10+ uses the jakarta.servlet package instead of javax.servlet, which this project targets (Servlet 4.0 / Tomcat 9), so deploying the WAR to an existing Tomcat 10 installation fails outright with ClassNotFoundException. A standalone Tomcat 9 instance was used instead, rather than migrating the whole codebase to Jakarta EE under time pressure."),
+  bullet("On the machine used for testing, Tomcat's default NIO connector failed to start with \"java.io.IOException: Unable to establish loopback connection\", a JDK-on-Windows regression in java.nio.channels.Selector's use of Unix domain sockets that reproduced identically on both JDK 22 and JDK 17. Switching the connector in conf/server.xml to protocol=\"org.apache.coyote.http11.Http11AprProtocol\" (the native APR/OpenSSL connector, which does not use java.nio.channels.Selector at all) resolved it, since the Tomcat Native library was already available on that machine."),
+  p("Neither issue affects the application code, only how the already-built WAR is deployed - included here because being able to explain a real deployment problem (and why the fix works) is exactly the kind of thing that should hold up under questioning, unlike a screenshot alone."),
 ];
 
 // ==================================================================
