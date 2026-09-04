@@ -13,3 +13,4 @@ docs/report/*.pdf
 docs/report/page-*.jpg
 docs/report/_check/
 docs/report/~$*.docx
+src/main/resources/db.properties

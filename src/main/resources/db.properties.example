@@ -1,0 +1,5 @@
+# Copy this file to db.properties and fill in your local MySQL credentials.
+# db.properties is gitignored on purpose so real credentials never get committed.
+db.url=jdbc:mysql://localhost:3306/sunrise_dental?useSSL=false&serverTimezone=UTC&allowPublicKeyRetrieval=true
+db.user=root
+db.password=changeme
