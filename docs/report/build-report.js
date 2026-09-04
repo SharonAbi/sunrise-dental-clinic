@@ -443,7 +443,6 @@ const appendices = [
   h3("A.3 BillingStrategyFactory.java and BillService.java (Strategy + Factory in use)"),
   ...imagePara("file-billingstrategyfactory.png", ...Object.values(scale(988, 374, 460)), "", CODE_DIR),
   ...imagePara("file-billservice.png", ...Object.values(scale(988, 1329, 460)), "", CODE_DIR),
-  placeholder("OPTIONAL: PASTE ADDITIONAL FILES", "If your marker wants more of the source in the PDF itself rather than via the GitHub link, add further classes here (e.g. the Servlets, or ValidationUtil) as syntax-highlighted images - not pasted text - for the same reason given above. node docs/report/codeshots/gen-html.js shows how these were generated (add an entry to fileBlocks and re-run it, then screenshot the resulting HTML)."),
 
   h2("Appendix B: MySQL Schema (sql/schema.sql)"),
   ...imagePara("file-schema.png", ...Object.values(scale(988, 1762, 460)), "", CODE_DIR),
